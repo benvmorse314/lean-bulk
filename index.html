@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Lean Bulk - Ben's whole-food meal plan: daily checklist, thaw and prep reminders, recipes, and weigh-ins.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lean Bulk">
+<meta name="theme-color" content="#0B0A08">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<title>Lean Bulk</title>
+<style>
+/* ---------- faces ---------- */
+@font-face{
+  font-family:'Big Shoulders';
+  src:url('fonts/big-shoulders-display-100-900.woff2') format('woff2-variations');
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Archivo';
+  src:url('fonts/archivo-100-900.woff2') format('woff2-variations');
+  font-weight:100 900; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Plex Mono';
+  src:url('fonts/ibm-plex-mono-400.woff2') format('woff2');
+  font-weight:400; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Plex Mono';
+  src:url('fonts/ibm-plex-mono-600.woff2') format('woff2');
+  font-weight:600; font-style:normal; font-display:swap;
+}
+
+/* ---------- tokens (Ground Force family) ---------- */
+:root{
+  --ink:#0B0A08;            /* asphalt */
+  --panel:#14110D;          /* rubber mat */
+  --panel2:#1D1913;         /* raised plate */
+  --chalk:#EDE6D8;          /* primary ink */
+  --dim:#A69C89;            /* worn chalk */
+  --faint:#6E6557;          /* stenciled */
+  --line:rgba(237,230,216,.10);
+  --line2:rgba(237,230,216,.24);
+  --accent:#E5566E;         /* melon */
+  --rind:#3BC77E;           /* rind green - protein, positive */
+  --gold:#E0A83C;           /* caution */
+  --danger:#F0594C;
+  --disp:'Big Shoulders', 'Arial Narrow', sans-serif;
+  --sans:'Archivo', 'Segoe UI', sans-serif;
+  --mono:'Plex Mono', ui-monospace, Consolas, monospace;
+  --snap:cubic-bezier(.2,1.4,.3,1);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+button,a,input,select,summary,label{touch-action:manipulation}
+html{color-scheme:dark}
+body{
+  margin:0; background:var(--ink); color:var(--chalk);
+  font:15.5px/1.5 var(--sans);
+  padding:0 18px calc(110px + env(safe-area-inset-bottom));
+  max-width:560px; margin-inline:auto;
+}
+body::before{
+  content:''; position:fixed; z-index:-2; inset:0; pointer-events:none;
+  background:
+    radial-gradient(120% 60% at 50% -8%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 60%),
+    radial-gradient(140% 90% at 50% 115%, rgba(0,0,0,.55) 0%, transparent 55%);
+}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.dim{color:var(--dim)}
+.small{font-size:12.5px; line-height:1.5}
+button{font:inherit; color:inherit; background:none; border:0; cursor:pointer; padding:0}
+input,select{font:inherit; color:var(--chalk)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+
+/* ---------- top bar ---------- */
+.top{
+  position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:10px;
+  padding:16px 2px 10px; margin:0 -18px; padding-inline:18px;
+  padding-top:calc(16px + env(safe-area-inset-top));
+  background:linear-gradient(color-mix(in srgb, var(--ink) 94%, transparent) 72%, transparent);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+}
+.mark{width:25px; height:25px; flex:none}
+.wordmark{
+  font-family:var(--disp); font-weight:800; font-size:19px; letter-spacing:.10em;
+  text-transform:uppercase; line-height:1;
+}
+.wordmark b{color:var(--accent); font-weight:800}
+#savedot{width:7px; height:7px; border-radius:50%; margin-left:auto; background:var(--dim); opacity:.4; transition:background .3s,opacity .3s}
+#savedot[data-s=saved]{background:var(--rind); opacity:1}
+#savedot[data-s=saving]{background:var(--accent); opacity:1}
+#savedot[data-s=err]{background:var(--danger); opacity:1}
+
+/* ---------- instrument cluster ---------- */
+.cluster{
+  display:flex; align-items:stretch; gap:14px;
+  border:1px solid var(--line); background:linear-gradient(180deg, var(--panel2), var(--panel));
+  padding:12px 14px 10px; margin:10px 0 14px; position:relative;
+}
+.cluster::before,.cluster::after{
+  content:''; position:absolute; width:9px; height:9px; border:1px solid var(--line2); pointer-events:none;
+}
+.cluster::before{top:-1px; left:-1px; border-right:0; border-bottom:0}
+.cluster::after{bottom:-1px; right:-1px; border-left:0; border-top:0}
+.wk{display:flex; align-items:baseline; gap:6px; flex:none}
+.wk .wklab{font-family:var(--mono); font-size:10px; letter-spacing:.22em; color:var(--faint); writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg); align-self:center}
+.wk b{font-family:var(--disp); font-weight:800; font-size:46px; line-height:.86; color:var(--accent); letter-spacing:.01em}
+.wk .of{font-family:var(--mono); font-size:11px; color:var(--faint); letter-spacing:.1em}
+.clmid{flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:4px; border-left:1px solid var(--line); padding-left:14px}
+.clblock{font-family:var(--disp); font-weight:700; font-size:19px; letter-spacing:.14em; text-transform:uppercase}
+.clsub{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ticks{display:flex; gap:4px; align-items:flex-end; padding-top:7px}
+.tick{height:14px; flex:1; background:var(--panel2); border:1px solid var(--line)}
+.tick.done{background:color-mix(in srgb, var(--accent) 45%, var(--panel2)); border-color:color-mix(in srgb, var(--accent) 50%, var(--line))}
+
+.pagetitle{padding:2px 2px 16px}
+.eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.2em; color:var(--faint); text-transform:uppercase}
+h2.disp{
+  font-family:var(--disp); font-size:42px; font-weight:800; letter-spacing:.015em;
+  text-transform:uppercase; margin:4px 0 0; line-height:.92;
+}
+h3.sec{font-family:var(--disp); font-weight:800; font-size:21px; letter-spacing:.08em; text-transform:uppercase; margin:0 0 10px; line-height:1}
+
+/* ---------- day strip ---------- */
+.strip{display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:5px; margin:0 0 16px}
+.dbtn{border:1px solid var(--line); background:var(--panel); padding:7px 0 8px; display:grid; justify-items:center; gap:2px}
+.dbtn .dd{font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; color:var(--faint)}
+.dbtn .dn{font-family:var(--disp); font-weight:800; font-size:21px; line-height:1}
+.dbtn .pp{display:flex; gap:2px; height:4px}
+.dbtn .pp i{width:5px; height:4px; background:var(--line2)}
+.dbtn .pp i.on{background:var(--accent)}
+.dbtn.today .dd{color:var(--accent)}
+.dbtn.sel{border-color:var(--chalk); background:var(--panel2)}
+
+/* ---------- panels ---------- */
+.panel{border:1px solid var(--line); background:linear-gradient(180deg, var(--panel2), var(--panel)); padding:14px; margin:0 0 14px}
+.panel.hot{border-color:color-mix(in srgb, var(--accent) 45%, var(--line))}
+.note{border-left:2px solid var(--rind); padding:8px 12px; background:color-mix(in srgb, var(--rind) 8%, transparent); font-size:13.5px; margin:0 0 14px}
+
+.bars{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 14px}
+.bar .bl{display:flex; justify-content:space-between; align-items:baseline; gap:6px}
+.bar .bl b{font-family:var(--disp); font-weight:800; font-size:30px; line-height:1; font-variant-numeric:tabular-nums}
+.bar .bl span{font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--faint); text-transform:uppercase}
+.track{height:6px; background:var(--panel2); border:1px solid var(--line); margin-top:6px}
+.track i{display:block; height:100%; width:0; background:var(--accent); transition:width .35s var(--snap)}
+.track.p i{background:var(--rind)}
+
+/* ---------- meal rows ---------- */
+.slot{display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:4px 12px; align-items:start; padding:13px 0; border-top:1px solid var(--line)}
+.slot:first-child{border-top:0; padding-top:2px}
+.chk{width:30px; height:30px; border:1.5px solid var(--line2); display:grid; place-items:center; margin-top:1px}
+.chk svg{width:16px; height:16px; stroke:var(--ink); stroke-width:3; fill:none; opacity:0}
+.chk.on{background:var(--accent); border-color:var(--accent)}
+.chk.on svg{opacity:1}
+.slot .when{font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--faint); text-transform:uppercase}
+.slot .what{font-weight:700; font-size:16px; line-height:1.3}
+.slot.done .what{color:var(--dim); text-decoration:line-through; text-decoration-color:var(--accent)}
+.slot .parts{font-size:13px; color:var(--dim); margin-top:2px}
+.slot .mac{text-align:right; font-family:var(--mono); font-size:11px; color:var(--faint); white-space:nowrap; font-variant-numeric:tabular-nums}
+.slot .mac b{display:block; font-family:var(--disp); font-size:20px; color:var(--chalk); font-weight:700; letter-spacing:.02em}
+.slot .how{grid-column:2 / 4; display:flex; flex-wrap:wrap; gap:6px; margin-top:6px}
+.rchip{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; padding:5px 9px; border:1px solid var(--line2); color:var(--dim); text-transform:uppercase}
+.rchip:active{border-color:var(--accent); color:var(--accent)}
+
+.task{display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:center; padding:8px 0; text-align:left; width:100%}
+.task.done .tt{color:var(--dim); text-decoration:line-through}
+.thawname{font-family:var(--disp); font-weight:800; font-size:24px; letter-spacing:.04em; text-transform:uppercase; line-height:1.05}
+
+.banner{border:1px solid var(--gold); color:var(--gold); padding:10px 12px; font-size:13.5px; margin:0 0 14px}
+
+/* ---------- week ---------- */
+.wday{display:grid; grid-template-columns:62px minmax(0,1fr); gap:12px; padding:12px 0; border-top:1px solid var(--line)}
+.wday:first-child{border-top:0; padding-top:0}
+.wday .wd{font-family:var(--disp); font-weight:800; font-size:22px; line-height:1; letter-spacing:.04em}
+.wday .wd small{display:block; font-family:var(--mono); font-size:10px; letter-spacing:.12em; color:var(--faint); font-weight:400; margin-top:4px}
+.wday.today .wd{color:var(--accent)}
+.wday .ml{font-size:14px; line-height:1.4}
+.wday .ml span{font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--faint); text-transform:uppercase; margin-right:6px}
+.wday .tz{font-size:12.5px; color:var(--dim); margin-top:4px}
+ul.plain{margin:0; padding-left:18px; display:grid; gap:6px; font-size:14px}
+
+/* ---------- recipes ---------- */
+details.rec{border:1px solid var(--line); background:var(--panel); margin:0 0 8px}
+details.rec summary{list-style:none; cursor:pointer; padding:13px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px}
+details.rec summary::-webkit-details-marker{display:none}
+details.rec summary b{font-family:var(--disp); font-weight:800; font-size:19px; letter-spacing:.06em; text-transform:uppercase; line-height:1.1}
+details.rec summary span{font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--faint); text-transform:uppercase; text-align:right}
+details.rec[open]{border-color:var(--line2); background:var(--panel2)}
+details.rec .rb{padding:0 14px 14px; display:grid; gap:10px; font-size:14px}
+details.rec ul, details.rec ol{margin:0; padding-left:18px; display:grid; gap:4px}
+details.rec.flash{animation:flash 1.4s ease}
+@keyframes flash{0%,40%{border-color:var(--accent)}100%{border-color:var(--line2)}}
+
+/* ---------- weigh-in ---------- */
+.wform{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px}
+.nin{width:100%; height:48px; background:var(--ink); border:1px solid var(--line2); padding:0 12px; font-family:var(--mono); font-size:16px; color:var(--chalk)}
+.nin:focus{border-color:var(--accent); outline:none}
+.bigbtn{width:100%; height:48px; margin-top:8px; border:1px solid var(--accent); color:var(--accent); font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; font-weight:600}
+.bigbtn:active{background:var(--accent); color:var(--ink)}
+.ghost{width:100%; height:44px; margin-top:8px; border:1px solid var(--line2); color:var(--dim); font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase}
+.ghost:active{border-color:var(--chalk); color:var(--chalk)}
+.ghost.armed{border-color:var(--danger); color:var(--danger)}
+.stats{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin:0 0 10px}
+.stats b{display:block; font-family:var(--disp); font-weight:800; font-size:28px; line-height:1; font-variant-numeric:tabular-nums}
+.verdict{font-size:14px; border-left:2px solid var(--accent); padding:6px 12px; margin-top:12px}
+.hist{list-style:none; margin:10px 0 0; padding:0}
+.hist li{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 0; border-top:1px solid var(--line); font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums}
+.hist li button{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; color:var(--faint); text-transform:uppercase; padding:4px 6px}
+.hist li button.armed{color:var(--danger)}
+svg text{font-family:var(--mono); font-size:11px; fill:var(--faint)}
+textarea.clip{width:100%; min-height:140px; margin-top:8px; background:var(--ink); color:var(--chalk); border:1px solid var(--line2); font-family:var(--mono); font-size:12px; padding:10px}
+.wrow{display:flex; justify-content:space-between; gap:8px; font-size:13px; padding:6px 0; border-top:1px solid var(--line)}
+
+/* ---------- bottom tabs ---------- */
+nav.tabs{
+  position:fixed; left:0; right:0; bottom:0; z-index:40; display:flex; justify-content:center; gap:2px;
+  background:color-mix(in srgb, var(--ink) 88%, transparent);
+  -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px);
+  border-top:1px solid var(--line); padding:8px 10px calc(10px + env(safe-area-inset-bottom));
+}
+.tabbtn{
+  flex:1; max-width:142px; display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:8px 4px; color:var(--faint); position:relative;
+}
+.tabbtn::before{content:''; position:absolute; top:-9px; left:25%; right:25%; height:2px; background:transparent}
+.tabbtn svg{width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+.tabbtn span{font-size:9.5px; letter-spacing:.16em; font-weight:600}
+.tabbtn.on{color:var(--accent)}
+.tabbtn.on::before{background:var(--accent)}
+
+#toast{
+  position:fixed; top:calc(14px + env(safe-area-inset-top)); left:50%; transform:translate(-50%,-14px); z-index:70;
+  background:var(--panel2); border:1px solid var(--line2); padding:12px 18px;
+  font-size:13.5px; opacity:0; pointer-events:none; transition:all .22s; max-width:88vw; text-align:center;
+}
+#toast.show{opacity:1; transform:translate(-50%,0)}
+#toast.good{border-color:var(--rind)}
+
+#splash{
+  position:fixed; inset:0; z-index:90; background:var(--ink); display:grid; place-items:center;
+  transition:opacity .5s;
+}
+#splash.hide{opacity:0; pointer-events:none}
+.splashin{display:flex; flex-direction:column; align-items:center; gap:16px}
+.splashin .mark{width:54px; height:54px}
+.splashin .wordmark{font-size:24px}
+
+.foot{text-align:center; font-family:var(--mono); font-size:10px; letter-spacing:.24em; padding:12px 0 26px; text-transform:uppercase; color:var(--faint)}
+
+body.boot #view>*{animation:risein .4s var(--snap) both; animation-delay:.26s}
+body.boot #view>*:nth-child(1){animation-delay:.02s}
+body.boot #view>*:nth-child(2){animation-delay:.06s}
+body.boot #view>*:nth-child(3){animation-delay:.10s}
+body.boot #view>*:nth-child(4){animation-delay:.14s}
+body.boot #view>*:nth-child(5){animation-delay:.18s}
+@keyframes risein{0%{opacity:0; transform:translateY(10px)}100%{opacity:1; transform:none}}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important; transition:none!important}
+}
+</style>
+</head>
+<body class="boot">
+
+<div id="splash"><div class="splashin">
+  <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M3 11a13 13 0 0 0 26 0z" fill="#3BC77E"/><path d="M5.6 11a10.4 10.4 0 0 0 20.8 0z" fill="#EDE6D8"/><path d="M6.6 11a9.4 9.4 0 0 0 18.8 0z" fill="var(--accent)"/><circle cx="12" cy="14.5" r="1" fill="#0B0A08"/><circle cx="16" cy="17" r="1" fill="#0B0A08"/><circle cx="20" cy="14.5" r="1" fill="#0B0A08"/></svg>
+  <div class="wordmark">LEAN<b>BULK</b></div>
+</div></div>
+
+<header class="top">
+  <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M3 11a13 13 0 0 0 26 0z" fill="#3BC77E"/><path d="M5.6 11a10.4 10.4 0 0 0 20.8 0z" fill="#EDE6D8"/><path d="M6.6 11a9.4 9.4 0 0 0 18.8 0z" fill="var(--accent)"/><circle cx="12" cy="14.5" r="1" fill="#0B0A08"/><circle cx="16" cy="17" r="1" fill="#0B0A08"/><circle cx="20" cy="14.5" r="1" fill="#0B0A08"/></svg>
+  <div class="wordmark">LEAN<b>BULK</b></div>
+  <div id="savedot" data-s="saved" title="Saved"></div>
+</header>
+
+<main id="view"></main>
+
+<nav class="tabs">
+  <button class="tabbtn on" data-tab="today"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="1.5"/><path d="M4 10h16M9 3v4M15 3v4M8.5 14.5l2.2 2.2 4.8-4.8"/></svg><span>TODAY</span></button>
+  <button class="tabbtn" data-tab="week"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="7" cy="6" r=".6" fill="currentColor"/></svg><span>WEEK</span></button>
+  <button class="tabbtn" data-tab="recipes"><svg viewBox="0 0 24 24"><path d="M5 11h14a7 7 0 0 1-14 0zM9 20h6M12 18v2M8 7c0-1.5 1-2 1-3.5M12 7c0-1.5 1-2 1-3.5M16 7c0-1.5 1-2 1-3.5"/></svg><span>RECIPES</span></button>
+  <button class="tabbtn" data-tab="weigh"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 9.5a5 5 0 0 1 7 0M12 9.5l1.4-2"/></svg><span>WEIGH</span></button>
+</nav>
+
+<div id="toast"></div>
+<input type="file" id="importfile" accept="application/json,.json" hidden>
+
+<script>
+(function(){
+'use strict';
+
+/* Build number - keep equal to VER in sw.js ('lb-v' + APP_VER). */
+const APP_VER = '1.0.0';
+const KEY = 'lb-data-v1';
+
+/* ---------- the plan (week 1) ---------- */
+const RECIPES = {
+  tacoBeef: { name:'Taco beef', yield:'Batch \u00b7 3 bowls', items:['1.5 lb ground beef','1 tbsp chili powder, 2 tsp cumin','1 tsp each garlic + onion powder','1 tsp salt, 1/4 cup water'], steps:['Brown the beef in a hot pan 8-10 min, breaking it up.','Add the spices and water, simmer 2 min until saucy.','Split into 3 containers. Freeze one for Monday.'] },
+  thighs: { name:'Grilled chicken thighs', yield:'Batch \u00b7 3 meals', items:['The whole chicken thigh tray (about 2.5 lb)','1 tbsp olive oil','Your grill seasoning'], steps:['Pat dry, toss with oil and seasoning.','Grill medium-high 5-6 min per side, to 175\u00b0F inside.','Rest 5 min, slice, split into 3. Keeps 4 days.'] },
+  sweetPotato: { name:'Baked sweet potatoes', yield:'4 on Wed \u00b7 3 on Sat', items:['Sweet potatoes, scrubbed','Salt, olive oil or Cholula to serve'], steps:['Oven 400\u00b0F. Poke each 6-8 times with a fork.','Foil-lined sheet, 45-60 min until a knife slides in.','Fridge up to 5 days. Reheat 2 min in the microwave.'] },
+  rice: { name:'Rice cooker jasmine', yield:'3 cups dry = ~9 cooked', items:['Jasmine rice','Water to the cooker line'], steps:['Rinse until the water runs mostly clear.','Cook on white rice. Fluff, cool, fridge within an hour.','Keeps 4-5 days. Splash of water before reheating.'] },
+  yogurtSauce: { name:'Garlic yogurt sauce', yield:'2-3 bowls', items:['1/2 cup Greek yogurt','1 garlic clove, grated','Juice of 1/2 lemon, pinch of salt, splash of water'], steps:['Stir together. Keeps 4 days.'] },
+  steak: { name:'Grilled steak', yield:'Ribeye or NY strip', items:['1 steak, fully thawed','Salt and pepper'], steps:['Salt both sides 40 min before cooking.','Grill as hot as it goes, 4-5 min per side to 130\u00b0F for medium-rare.','Rest 5 min before slicing.'] },
+  shrimp: { name:'Garlic-lemon shrimp', yield:'1 meal', items:['About 10 oz shrimp','1 tbsp olive oil, 1 tsp butter','3 garlic cloves, sliced','Lemon, salt, cilantro'], steps:['Pat the thawed shrimp very dry.','Oil and butter in a hot pan, garlic 30 s, then shrimp 2 min per side until pink and C-shaped.','Lemon juice, salt, cilantro. Over rice.'] },
+  smash: { name:'Smash burger bowls', yield:'2 meals \u00b7 four 6 oz balls', items:['1.5 lb ground beef, rolled into 4 balls','Salt, shredded cheese','Sliced onion, Dijon, Cholula'], steps:['Cast iron on high, on the stove or the grill.','Ball in, smash flat with a spatula, salt. 2-3 min until crusty.','Flip, cheese on top, 1 min. Two patties per bowl over rice.'] },
+  sausage: { name:'Sausage, peppers + onions', yield:'1 pack per meal', items:['1 pack apple chicken sausage','1-2 peppers and 1/2 onion, sliced','1 tbsp olive oil, salt'], steps:['Grill the sausage 8-10 min, turning, to 165\u00b0F inside.','Peppers and onion in a foil pack or grill basket, 10-12 min.','Slice and serve with sweet potato or rice.'] },
+  broccoli: { name:'Roasted broccoli', yield:'Side', items:['1 crown, cut into florets','1 tsp oil, salt, garlic powder'], steps:['Roast at 400\u00b0F for 18-20 min next to the potatoes, or steam 4 min.'] },
+  spinach: { name:'Garlic spinach', yield:'Side', items:['2 big handfuls of spinach','1 tsp olive oil, 1 garlic clove'], steps:['Hot pan, garlic 20 s, spinach until just wilted, 1-2 min. Salt.'] },
+  smoothie: { name:'Afternoon smoothie', yield:'Daily \u00b7 ~700 kcal \u00b7 36 g', items:['1 cup Greek yogurt','1 cup whole milk','1.5 cups frozen mixed fruit','1 banana, 1 tbsp peanut butter','Handful of spinach'], steps:['Blend 45 s. Drink it before golf or a lift.'] },
+  bowl: { name:'Cottage cheese bowl', yield:'Daily \u00b7 ~455 kcal \u00b7 33 g', items:['1 cup 4% cottage cheese','1 cup berries','About 23 almonds (1 oz)'], steps:['Bowl, berries on top, almonds on that.'] }
+};
+
+const MEALS = {
+  beefBowl:     { name:'Beef burrito bowl', kcal:1050, p:58, parts:'1/3 taco beef, 1.5 cups rice, 1/3 can black beans, salsa, 1/2 avocado, 2 tbsp cheese, Cholula', r:['tacoBeef','rice'] },
+  chickenPlate: { name:'Chicken, sweet potato, broccoli', kcal:900, p:74, parts:'1/3 grilled thighs, 1 sweet potato, 1.5 cups broccoli', r:['thighs','sweetPotato','broccoli'] },
+  chickenRice:  { name:'Chicken rice bowl', kcal:905, p:76, parts:'1/3 grilled thighs, 1.5 cups rice, 1 grilled pepper, garlic yogurt sauce', r:['thighs','rice','yogurtSauce'] },
+  ribeye:       { name:'Ribeye, sweet potato, spinach', kcal:1015, p:67, parts:'Whole ribeye, 1 sweet potato, 2 handfuls garlic spinach', r:['steak','sweetPotato','spinach'] },
+  shrimp:       { name:'Garlic-lemon shrimp + rice', kcal:835, p:60, parts:'About 10 oz shrimp, 2 cups rice, broccoli', r:['shrimp','rice','broccoli'] },
+  chickenSweet: { name:'Chicken sweet potato bowl', kcal:870, p:71, parts:'Last 1/3 of the thighs, 1 sweet potato, 1/2 avocado, salsa', r:['thighs','sweetPotato'] },
+  smash:        { name:'Smash burger bowl', kcal:1080, p:79, parts:'2 smash patties, 1.5 cups rice, cheese, onion, Dijon, Cholula', r:['smash','rice'] },
+  smashLeft:    { name:'Smash burger bowl, round 2', kcal:1080, p:79, parts:'Last 2 beef balls cooked fresh, 1.5 cups rice, cheese, Dijon', r:['smash','rice'] },
+  sausagePlate: { name:'Sausage, peppers, sweet potato', kcal:950, p:59, parts:'Sausage pack 1, grilled peppers + onion, 1 sweet potato', r:['sausage','sweetPotato'] },
+  strip:        { name:'NY strip, rice, broccoli', kcal:960, p:72, parts:'NY strip 1, 1.5 cups rice, broccoli', r:['steak','rice','broccoli'] },
+  sausageRice:  { name:'Sausage + pepper rice bowl', kcal:1000, p:60, parts:'Sausage pack 2, peppers + onion, 1.5 cups rice', r:['sausage','rice'] },
+  strip2:       { name:'NY strip, sweet potato, spinach', kcal:910, p:68, parts:'NY strip 2, 1 sweet potato, garlic spinach', r:['steak','sweetPotato','spinach'] }
+};
+
+const DAILY = {
+  smoothie: { name:'Afternoon smoothie', kcal:700, p:36, parts:'Greek yogurt, milk, frozen fruit, banana, peanut butter, spinach', r:['smoothie'] },
+  bowl:     { name:'Cottage cheese bowl', kcal:455, p:33, parts:'1 cup cottage cheese, 1 cup berries, 1 oz almonds', r:['bowl'] },
+  fruit:    { name:'Fruit, whenever', kcal:160, p:2, parts:'2 cups watermelon or 2 mandarins. Optional.', r:[] }
+};
+
+const PLAN = {
+  week: 1,
+  days: [
+    { date:'2026-10-21', dow:'Wed', label:'Prep day', m1:'beefBowl', m2:'chickenPlate', thaw:'Ribeye',
+      note:'Groceries land 8-10am. If the ground beef is still firm at lunch, seal it in a zip bag in cold water for 30-45 min, or eat the chicken plate first.',
+      prep:['Oven to 400\u00b0F: bake 4 sweet potatoes','Rice cooker: 3 cups dry jasmine','Brown 1.5 lb taco beef, split into 3','Freeze taco beef portion 3 (for Monday)','Grill all the chicken thighs, split into 3'] },
+    { date:'2026-10-22', dow:'Thu', m1:'chickenRice', m2:'ribeye', thaw:'Shrimp', prep:['Make the garlic yogurt sauce'] },
+    { date:'2026-10-23', dow:'Fri', m1:'beefBowl', m2:'shrimp', thaw:'Ground beef (the other 1.5 lb)' },
+    { date:'2026-10-24', dow:'Sat', label:'Prep day', m1:'chickenSweet', m2:'smash', thaw:'Sausage pack 1',
+      prep:['Bake 3 sweet potatoes','Rice cooker: 2 cups dry jasmine','Roll 1.5 lb beef into four 6 oz balls'] },
+    { date:'2026-10-25', dow:'Sun', m1:'smashLeft', m2:'sausagePlate', thaw:'NY strip + the frozen taco beef' },
+    { date:'2026-10-26', dow:'Mon', m1:'beefBowl', m2:'strip', thaw:'Sausage pack 2 + NY strip 2' },
+    { date:'2026-10-27', dow:'Tue', m1:'sausageRice', m2:'strip2', thaw:null,
+      note:'Last day of week 1. In WEIGH, tap COPY FOR CLAUDE and paste it to Claude with what you liked and what is left in the freezer. That builds the week 2 cart.' }
+  ]
+};
+const TARGET_KCAL = 3000, TARGET_P = 170;
+const CORE = ['m1','smoothie','m2','bowl'];
+
+/* ---------- state ---------- */
+let S;
+const UI = { tab:'today', sel:null, openRec:null, confirm:null, clip:null, saveT:null };
+
+function defaults(){ return { v:1, meta:{ rev:0, lastBackup:0 }, days:{} }; }
+function normalize(p){
+  const s = defaults();
+  if(p && p.meta){ s.meta.rev = +p.meta.rev || 0; s.meta.lastBackup = +p.meta.lastBackup || 0; }
+  if(p && p.days && typeof p.days === 'object'){
+    Object.keys(p.days).forEach(d => {
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+      const src = p.days[d] || {}, day = { done:{} };
+      if(src.done && typeof src.done === 'object') Object.keys(src.done).forEach(k => { if(src.done[k] === true) day.done[k] = true; });
+      if(typeof src.w === 'number' && src.w > 50 && src.w < 500) day.w = Math.round(src.w * 10) / 10;
+      s.days[d] = day;
+    });
+  }
+  return s;
+}
+
+let MODE = 'memory'; // local | memory
+(function load(){
+  try{
+    const t = '__lb_t'; localStorage.setItem(t, '1'); localStorage.removeItem(t);
+    MODE = 'local';
+  }catch(e){ MODE = 'memory'; }
+  let raw = null;
+  try{ if(MODE==='local') raw = localStorage.getItem(KEY); }catch(e){ raw = null; }
+  if(raw){
+    try{
+      const parsed = JSON.parse(raw);
+      if(!parsed || typeof parsed !== 'object' || !parsed.days) throw new Error('bad shape');
+      S = normalize(parsed);
+      return;
+    }catch(e){
+      /* present but unreadable: stash the raw blob BEFORE any save can overwrite it */
+      try{ if(MODE==='local' && !localStorage.getItem(KEY+'-corrupt')) localStorage.setItem(KEY+'-corrupt', raw); }catch(e2){}
+      setTimeout(()=>toast('Stored data was unreadable \u2014 a recovery copy was kept.'), 1600);
+    }
+  }
+  S = defaults();
+})();
+
+function save(){
+  setSaveDot('saving');
+  clearTimeout(UI.saveT);
+  UI.saveT = setTimeout(()=>{
+    UI.saveT = null;
+    try{
+      S.meta.rev = (S.meta.rev||0)+1;
+      if(MODE==='local'){ localStorage.setItem(KEY, JSON.stringify(S)); }
+      else { throw new Error('no storage'); }
+      setSaveDot('saved');
+    }catch(e){ setSaveDot('err'); }
+  }, 400);
+}
+function flushSave(){
+  if(!UI.saveT) return;
+  clearTimeout(UI.saveT); UI.saveT = null;
+  try{
+    S.meta.rev = (S.meta.rev||0)+1;
+    if(MODE==='local'){ localStorage.setItem(KEY, JSON.stringify(S)); setSaveDot('saved'); }
+    else { setSaveDot('err'); }
+  }catch(e){ setSaveDot('err'); }
+}
+function setSaveDot(state){ const d = el('savedot'); if(d) d.dataset.s = state; }
+
+/* ---------- helpers ---------- */
+function el(id){ return document.getElementById(id); }
+function pad(n){ return (n < 10 ? '0' : '') + n; }
+function iso(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function todayISO(){ return iso(new Date()); }
+function addDays(s, n){ const p = s.split('-'); return iso(new Date(+p[0], +p[1]-1, +p[2]+n)); }
+function md(s){ const p = s.split('-'); return (+p[1]) + '/' + (+p[2]); }
+function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function dayRec(d){ if(!S.days[d]) S.days[d] = { done:{} }; return S.days[d]; }
+function peek(d){ return S.days[d] || { done:{} }; }
+const CHECK = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 5"/></svg>';
+
+function slotsFor(day){
+  return [
+    { key:'m1', when:'Meal 1 \u00b7 around noon', item:MEALS[day.m1] },
+    { key:'smoothie', when:'Afternoon \u00b7 before golf or a lift', item:DAILY.smoothie },
+    { key:'m2', when:'Dinner', item:MEALS[day.m2] },
+    { key:'bowl', when:'Evening', item:DAILY.bowl },
+    { key:'fruit', when:'Anytime', item:DAILY.fruit }
+  ];
+}
+function eaten(day){
+  const st = peek(day.date); let k = 0, p = 0;
+  slotsFor(day).forEach(s => { if(st.done[s.key]){ k += s.item.kcal; p += s.item.p; } });
+  return { k, p };
+}
+function planned(day){
+  let k = 0, p = 0;
+  slotsFor(day).forEach(s => { if(s.key !== 'fruit'){ k += s.item.kcal; p += s.item.p; } });
+  return { k, p };
+}
+function defaultSel(){
+  const t = todayISO(), D = PLAN.days;
+  for(let i = 0; i < D.length; i++) if(D[i].date === t) return i;
+  return t > D[D.length-1].date ? D.length-1 : 0;
+}
+
+/* ---------- views ---------- */
+function vToday(){
+  const D = PLAN.days, t = todayISO();
+  if(UI.sel === null) UI.sel = defaultSel();
+  const day = D[UI.sel], st = peek(day.date), e = eaten(day), pl = planned(day);
+  const doneCore = CORE.filter(k => st.done[k]).length;
+  let h = '';
+  h += '<div class="cluster"><div class="wk"><span class="wklab">DAY</span><b>'+(UI.sel+1)+'</b><span class="of">/7</span></div>'
+    + '<div class="clmid"><div class="clblock">'+day.dow+' '+md(day.date)+(day.label ? ' \u00b7 '+day.label : '')+'</div>'
+    + '<div class="clsub">'+(day.date === t ? 'TODAY \u00b7 ' : '')+'WEEK '+PLAN.week+' \u00b7 '+doneCore+' OF 4 EATEN</div>'
+    + '<div class="ticks">'+CORE.map(k => '<div class="tick'+(st.done[k] ? ' done' : '')+'"></div>').join('')+'</div></div></div>';
+
+  h += '<div class="strip">'+D.map((d, i) => {
+    const s2 = peek(d.date);
+    return '<button class="dbtn'+(i === UI.sel ? ' sel' : '')+(d.date === t ? ' today' : '')+'" data-act="day" data-i="'+i+'" aria-label="'+d.dow+' '+md(d.date)+'">'
+      + '<span class="dd">'+d.dow.toUpperCase()+'</span><span class="dn">'+(+d.date.slice(8))+'</span>'
+      + '<span class="pp">'+CORE.map(k => '<i class="'+(s2.done[k] ? 'on' : '')+'"></i>').join('')+'</span></button>';
+  }).join('')+'</div>';
+
+  if(t > D[D.length-1].date) h += '<div class="banner">Week '+PLAN.week+' is done. In WEIGH, tap COPY FOR CLAUDE and send it to Claude to build next week.</div>';
+  if(day.note) h += '<div class="note">'+esc(day.note)+'</div>';
+
+  h += '<div class="bars">'
+    + '<div class="bar"><div class="bl"><b>'+fmt(e.k)+'</b><span>/ '+fmt(TARGET_KCAL)+' kcal</span></div><div class="track"><i style="width:'+Math.min(100, e.k/TARGET_KCAL*100)+'%"></i></div></div>'
+    + '<div class="bar"><div class="bl"><b>'+e.p+'g</b><span>/ '+TARGET_P+' g protein</span></div><div class="track p"><i style="width:'+Math.min(100, e.p/TARGET_P*100)+'%"></i></div></div></div>';
+
+  h += '<div class="panel">'+slotsFor(day).map(s => {
+    const on = !!st.done[s.key];
+    const how = s.item.r.length ? '<div class="how">'+s.item.r.map(r => '<button class="rchip" data-act="rec" data-r="'+r+'">'+esc(RECIPES[r].name)+'</button>').join('')+'</div>' : '';
+    return '<div class="slot'+(on ? ' done' : '')+'">'
+      + '<button class="chk'+(on ? ' on' : '')+'" data-act="tick" data-k="'+s.key+'" aria-pressed="'+on+'" aria-label="Ate '+esc(s.item.name)+'">'+CHECK+'</button>'
+      + '<div data-act="tick" data-k="'+s.key+'" style="cursor:pointer"><div class="when">'+s.when+'</div><div class="what">'+esc(s.item.name)+'</div><div class="parts">'+esc(s.item.parts)+'</div></div>'
+      + '<div class="mac"><b>'+fmt(s.item.kcal)+'</b>KCAL \u00b7 '+s.item.p+'G</div>'+how+'</div>';
+  }).join('')+'<div class="small dim" style="padding-top:10px;border-top:1px solid var(--line)">Planned \u2248 '+fmt(pl.k)+' kcal \u00b7 '+pl.p+' g protein before fruit.</div></div>';
+
+  if(day.thaw){
+    const on = !!st.done.thaw;
+    h += '<div class="panel hot"><div class="eyebrow">Tonight \u00b7 freezer to fridge</div>'
+      + '<button class="task'+(on ? ' done' : '')+'" data-act="tick" data-k="thaw"><span class="chk'+(on ? ' on' : '')+'">'+CHECK+'</span><span class="tt thawname">'+esc(day.thaw)+'</span></button></div>';
+  } else {
+    h += '<div class="panel"><div class="eyebrow">Tonight</div><p style="margin:6px 0 0">Nothing to thaw. Plan week '+(PLAN.week+1)+'.</p></div>';
+  }
+  if(day.prep){
+    h += '<div class="panel"><h3 class="sec">'+(day.label || 'Quick prep')+'</h3>'+day.prep.map((p, i) => {
+      const k = 'prep'+i, on = !!st.done[k];
+      return '<button class="task'+(on ? ' done' : '')+'" data-act="tick" data-k="'+k+'"><span class="chk'+(on ? ' on' : '')+'">'+CHECK+'</span><span class="tt">'+esc(p)+'</span></button>';
+    }).join('')+'</div>';
+  }
+  const nx = D[UI.sel+1];
+  if(nx) h += '<div class="panel"><div class="eyebrow">Tomorrow \u00b7 '+nx.dow+' '+md(nx.date)+'</div><p style="margin:6px 0 0"><b>'+esc(MEALS[nx.m1].name)+'</b><br>'+esc(MEALS[nx.m2].name)+'</p></div>';
+  h += '<div class="foot">LEAN BULK v'+APP_VER+' \u00b7 WEEK '+PLAN.week+'</div>';
+  return h;
+}
+
+function vWeek(){
+  const t = todayISO();
+  let h = '<div class="pagetitle"><div class="eyebrow">Week '+PLAN.week+' \u00b7 '+md(PLAN.days[0].date)+' - '+md(PLAN.days[6].date)+'</div><h2 class="disp">The week</h2></div>';
+  h += '<div class="panel">'+PLAN.days.map(d => {
+    const pl = planned(d);
+    return '<div class="wday'+(d.date === t ? ' today' : '')+'"><div class="wd">'+d.dow.toUpperCase()+'<small>'+md(d.date)+(d.label ? ' \u00b7 PREP' : '')+'</small></div><div>'
+      + '<div class="ml"><span>M1</span>'+esc(MEALS[d.m1].name)+'</div><div class="ml"><span>DIN</span>'+esc(MEALS[d.m2].name)+'</div>'
+      + '<div class="tz">'+(d.thaw ? 'Thaw tonight: '+esc(d.thaw)+' \u00b7 ' : '')+'\u2248 '+fmt(pl.k)+' kcal \u00b7 '+pl.p+' g</div></div></div>';
+  }).join('')+'</div>';
+  h += '<div class="panel"><h3 class="sec">Daily targets</h3><ul class="plain">'
+    + '<li>3,000-3,100 kcal, 165-180 g protein, about 375-400 g carbs, 90-100 g fat.</li>'
+    + '<li>Two real meals, no breakfast. The smoothie and evening bowl close the gap.</li>'
+    + '<li>Aim to gain 0.25-0.5 lb a week. WEIGH tells you when to adjust.</li></ul></div>';
+  h += '<div class="panel"><h3 class="sec">What you bought</h3><ul class="plain">'
+    + '<li>Fruit: watermelon, mandarins, blueberries, strawberries, raspberries, bananas, 64 oz frozen mixed fruit</li>'
+    + '<li>Veg: 7 sweet potatoes, 4 avocados, peppers, broccoli, spinach, onions, cilantro, garlic, lemons, limes</li>'
+    + '<li>Dairy: Greek yogurt x2, cottage cheese x3, whole milk, shredded cheese</li>'
+    + '<li>Protein: chicken thighs, plus ButcherBox ribeye, 2 NY strips, 3 lb ground beef, 2 packs apple chicken sausage, shrimp</li>'
+    + '<li>Pantry: jasmine rice, black beans x3, peanut butter, almonds, salsa, Cholula, Dijon, chili powder, cumin</li></ul></div>';
+  h += '<div class="foot">LEAN BULK v'+APP_VER+'</div>';
+  return h;
+}
+
+function vRecipes(){
+  let h = '<div class="pagetitle"><div class="eyebrow">'+Object.keys(RECIPES).length+' recipes \u00b7 week '+PLAN.week+'</div><h2 class="disp">Recipes</h2></div>';
+  h += Object.keys(RECIPES).map(k => {
+    const r = RECIPES[k];
+    return '<details class="rec" id="rec-'+k+'"'+(UI.openRec === k ? ' open' : '')+'><summary><b>'+esc(r.name)+'</b><span>'+esc(r.yield)+'</span></summary>'
+      + '<div class="rb"><ul>'+r.items.map(x => '<li>'+esc(x)+'</li>').join('')+'</ul><ol>'+r.steps.map(x => '<li>'+esc(x)+'</li>').join('')+'</ol></div></details>';
+  }).join('');
+  h += '<div class="foot">LEAN BULK v'+APP_VER+'</div>';
+  return h;
+}
+
+function weights(){
+  return Object.keys(S.days).filter(d => typeof S.days[d].w === 'number').sort().map(d => ({ d, w:S.days[d].w }));
+}
+function avg(list){ return list.length ? list.reduce((s, x) => s + x.w, 0) / list.length : null; }
+
+function verdict(all){
+  const w1s = PLAN.days[0].date, w1e = PLAN.days[6].date, w2s = addDays(w1s, 7), w2e = addDays(w1e, 7);
+  const a = all.filter(x => x.d >= w1s && x.d <= w1e), b = all.filter(x => x.d >= w2s && x.d <= w2e);
+  if(a.length >= 3 && b.length >= 3){
+    const diff = avg(b) - avg(a), s = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' lb week over week. ';
+    if(diff < 0.2) return s + '<b>Add about 200 kcal a day</b>: an extra 3/4 cup of rice, or a second tbsp of peanut butter in the smoothie.';
+    if(diff > 1.0) return s + '<b>Trim about 200 kcal a day</b>: skip the anytime fruit and halve the almonds.';
+    return s + '<b>Right on pace.</b> Keep calories where they are.';
+  }
+  return 'After two weeks this compares your weekly averages and says whether to add or trim about 200 kcal a day. Week 1: '
+    + a.length + ' of 3 weigh-ins. Week 2: ' + b.length + ' of 3.';
+}
+
+function chart(pts){
+  if(pts.length < 2) return '<p class="small dim" style="margin:0">The trend line shows up after two weigh-ins.</p>';
+  const W = 520, H = 170, L = 44, R = 12, T = 12, B = 26;
+  const ws = pts.map(p => p.w);
+  const lo = Math.floor((Math.min.apply(null, ws) - 0.5) * 2) / 2, hi = Math.ceil((Math.max.apply(null, ws) + 0.5) * 2) / 2;
+  const tm = s => new Date(s + 'T12:00:00').getTime();
+  const t0 = tm(pts[0].d), t1 = tm(pts[pts.length-1].d);
+  const X = s => L + (t1 === t0 ? 0 : (tm(s) - t0) / (t1 - t0)) * (W - L - R);
+  const Y = w => T + (hi - w) / (hi - lo) * (H - T - B);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + X(p.d).toFixed(1) + ' ' + Y(p.w).toFixed(1)).join(' ');
+  const area = line + ' L' + X(pts[pts.length-1].d).toFixed(1) + ' ' + (H-B) + ' L' + X(pts[0].d).toFixed(1) + ' ' + (H-B) + ' Z';
+  const ticks = [hi, (hi + lo) / 2, lo];
+  let s = '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Weight trend, '+pts.length+' weigh-ins">';
+  ticks.forEach(v => { s += '<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="rgba(237,230,216,.10)" stroke-width="1"/><text x="'+(L-8)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+v.toFixed(1)+'</text>'; });
+  s += '<path d="'+area+'" fill="rgba(229,86,110,.14)" stroke="none"/><path d="'+line+'" fill="none" stroke="#E5566E" stroke-width="2.5" stroke-linejoin="round"/>';
+  const last = pts[pts.length-1];
+  s += '<circle cx="'+X(last.d)+'" cy="'+Y(last.w)+'" r="4.5" fill="#E5566E"/>';
+  s += '<text x="'+L+'" y="'+(H-6)+'">'+md(pts[0].d)+'</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end">'+md(last.d)+'</text></svg>';
+  return s;
+}
+
+function vWeigh(){
+  const all = weights(), t = todayISO();
+  const last7 = all.filter(x => x.d > addDays(t, -7) && x.d <= t), a7 = avg(last7), latest = all[all.length-1];
+  let h = '<div class="pagetitle"><div class="eyebrow">Morning weigh-in</div><h2 class="disp">Weigh</h2></div>';
+  h += '<div class="panel"><p class="small dim" style="margin:0 0 10px">Same time daily: after the bathroom, before food or water. Single days swing 2-3 lb on water; the weekly average is the number that counts.</p>'
+    + '<form id="wform" class="wform"><input class="nin" type="date" id="wdate" value="'+t+'" aria-label="Date">'
+    + '<input class="nin" type="number" id="wval" step="0.1" min="80" max="400" inputmode="decimal" placeholder="lb" aria-label="Weight in pounds"></form>'
+    + '<button class="bigbtn" data-act="wsave">Save weight</button>'
+    + '<div class="verdict">'+verdict(all)+'</div></div>';
+  h += '<div class="panel"><div class="stats">'
+    + '<div><span class="eyebrow">Latest</span><b>'+(latest ? latest.w.toFixed(1) : '-')+'</b></div>'
+    + '<div><span class="eyebrow">7-day avg</span><b>'+(a7 ? a7.toFixed(1) : '-')+'</b></div>'
+    + '<div><span class="eyebrow">Entries</span><b>'+all.length+'</b></div></div>'
+    + chart(all.slice(-21))
+    + '<ul class="hist">'+(all.length ? all.slice().reverse().slice(0, 14).map(x => {
+        const armed = UI.confirm === 'wdel:' + x.d;
+        return '<li><span>'+new Date(x.d + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'numeric', day:'numeric' })+' \u00b7 <b>'+x.w.toFixed(1)+' lb</b></span>'
+          + '<button class="'+(armed ? 'armed' : '')+'" data-act="wdel" data-d="'+x.d+'">'+(armed ? 'Tap again to remove' : 'Remove')+'</button></li>';
+      }).join('') : '<li><span class="dim">No weigh-ins yet. Add this morning\u2019s above.</span></li>')+'</ul></div>';
+
+  const bk = S.meta.lastBackup ? 'Last backup ' + new Date(S.meta.lastBackup).toLocaleDateString('en-US') + '.' : 'No backup yet.';
+  h += '<div class="panel"><h3 class="sec">Your data</h3>'
+    + '<p class="small dim" style="margin:0">'+(MODE === 'local' ? 'Saved on this phone only. ' + bk + ' Deleting the home-screen app deletes it, so export a backup now and then.' : 'No storage available \u2014 data lives only until this tab closes.')+'</p>'
+    + '<button class="bigbtn" data-act="copyclaude">Copy for Claude</button>'
+    + (UI.clip !== null ? '<textarea class="clip" id="cliptext" readonly>'+esc(UI.clip)+'</textarea><p class="small dim" style="margin:6px 0 0">Copy didn\u2019t work here \u2014 select the text above and copy it.</p>' : '')
+    + '<button class="ghost" data-act="export">Export backup</button>'
+    + '<button class="ghost" data-act="import">Import backup</button>'
+    + '<button class="ghost" data-act="appupdate">Check for update</button>'
+    + '<div class="wrow" style="margin-top:12px"><span>Build</span><span class="mono">v'+APP_VER+'</span></div></div>';
+  h += '<div class="foot">LEAN BULK v'+APP_VER+' \u00b7 YARDAGE BOOK + GROUND FORCE FAMILY</div>';
+  return h;
+}
+
+function claudeText(){
+  const lines = ['Lean Bulk log - week ' + PLAN.week + ' (app v' + APP_VER + ')', '', 'Weigh-ins (lb):'];
+  const all = weights();
+  lines.push(all.length ? all.map(x => x.d + '  ' + x.w.toFixed(1)).join('\n') : '(none)');
+  lines.push('', 'Meals eaten:');
+  PLAN.days.forEach(d => {
+    const st = peek(d.date), e = eaten(d);
+    const ate = slotsFor(d).filter(s => st.done[s.key]).map(s => s.key === 'm1' || s.key === 'm2' ? s.item.name : s.key).join(', ');
+    lines.push(d.dow + ' ' + md(d.date) + ': ' + (ate || 'nothing ticked') + (ate ? ' (~' + fmt(e.k) + ' kcal, ' + e.p + ' g)' : ''));
+  });
+  return lines.join('\n');
+}
+
+/* ---------- render ---------- */
+function render(){
+  const v = el('view');
+  v.innerHTML = UI.tab === 'week' ? vWeek() : UI.tab === 'recipes' ? vRecipes() : UI.tab === 'weigh' ? vWeigh() : vToday();
+  document.querySelectorAll('.tabbtn').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
+}
+
+let toastT;
+function toast(msg, good){
+  const t = el('toast'); if(!t) return;
+  t.textContent = msg; t.className = 'show' + (good ? ' good' : '');
+  clearTimeout(toastT); toastT = setTimeout(()=>{ t.className = ''; }, 2400);
+}
+
+/* ---------- actions ---------- */
+function handleTap(e){
+  const a = e.target.closest('[data-act]'); if(!a) return;
+  const act = a.dataset.act;
+  if(act !== 'wdel') UI.confirm = null;
+
+  if(act === 'day'){ UI.sel = +a.dataset.i; render(); return; }
+  if(act === 'tick'){
+    const day = PLAN.days[UI.sel], r = dayRec(day.date), k = a.dataset.k;
+    if(r.done[k]) delete r.done[k]; else r.done[k] = true;
+    save(); render(); return;
+  }
+  if(act === 'rec'){
+    UI.openRec = a.dataset.r; UI.tab = 'recipes'; render();
+    const d = el('rec-' + UI.openRec);
+    if(d){ d.scrollIntoView({ block:'center' }); d.classList.add('flash'); }
+    return;
+  }
+  if(act === 'wsave'){
+    const d = el('wdate').value, v = parseFloat(el('wval').value);
+    if(!d){ toast('Pick a date first.'); return; }
+    if(!(v >= 80 && v <= 400)){ toast('Enter your weight in pounds, like 178.4.'); return; }
+    dayRec(d).w = Math.round(v * 10) / 10;
+    save(); render(); toast('Saved ' + v.toFixed(1) + ' lb for ' + md(d) + '.', true); return;
+  }
+  if(act === 'wdel'){
+    const d = a.dataset.d;
+    if(UI.confirm === 'wdel:' + d){ UI.confirm = null; if(S.days[d]) delete S.days[d].w; save(); render(); toast('Weigh-in removed.'); }
+    else { UI.confirm = 'wdel:' + d; render(); }
+    return;
+  }
+  if(act === 'copyclaude'){
+    const txt = claudeText();
+    const fallback = () => { UI.clip = txt; render(); const ta = el('cliptext'); if(ta){ ta.focus(); ta.select(); } };
+    try{
+      navigator.clipboard.writeText(txt).then(() => { UI.clip = null; render(); toast('Copied. Paste it to Claude.', true); }, fallback);
+    }catch(err){ fallback(); }
+    return;
+  }
+  if(act === 'export'){
+    try{
+      flushSave();
+      const blob = new Blob([JSON.stringify(S, null, 1)], { type:'application/json' });
+      const l = document.createElement('a');
+      l.href = URL.createObjectURL(blob);
+      l.download = 'lean-bulk-backup-' + todayISO() + '.json';
+      document.body.appendChild(l); l.click(); l.remove();
+      setTimeout(()=>URL.revokeObjectURL(l.href), 4000);
+      S.meta.lastBackup = Date.now(); save(); render();
+      toast('Backup exported.', true);
+    }catch(err){ toast('Export failed.'); }
+    return;
+  }
+  if(act === 'import'){ el('importfile').click(); return; }
+  if(act === 'appupdate'){
+    /* reload() re-requests the page, and the worker answers navigations straight
+       from the network - so this always lands on the newest deployed build */
+    flushSave();
+    toast('Checking for a new build...');
+    const go = () => location.reload();
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistration()
+        .then(r => r ? r.update() : null).catch(() => {})
+        .then(() => setTimeout(go, 1200));
+    } else setTimeout(go, 300);
+    return;
+  }
+}
+
+/* ---------- boot ---------- */
+try{
+  const keep = sessionStorage.getItem('lb-ui');
+  if(keep){ const p = keep.split('|'); if(['today','week','recipes','weigh'].indexOf(p[0]) >= 0) UI.tab = p[0]; }
+}catch(e){}
+render();
+setTimeout(()=>document.body.classList.remove('boot'), 900);
+
+document.body.addEventListener('click', handleTap);
+document.body.addEventListener('submit', e => { e.preventDefault(); const b = document.querySelector('[data-act="wsave"]'); if(b) b.click(); });
+document.querySelectorAll('.tabbtn').forEach(b => b.addEventListener('click', ()=>{
+  UI.tab = b.dataset.tab; UI.confirm = null; UI.clip = null;
+  if(UI.tab === 'today') UI.sel = defaultSel();
+  render(); window.scrollTo(0, 0);
+}));
+el('importfile').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    e.target.value = '';
+    try{
+      const parsed = JSON.parse(rd.result);
+      if(!parsed || !parsed.days || typeof parsed.days !== 'object') throw new Error('bad shape');
+      S = normalize(parsed); save(); render(); toast('Backup imported.', true);
+    }catch(err){ toast('That isn\u2019t a Lean Bulk backup.'); }
+  };
+  rd.onerror = () => { toast('Could not read that file.'); e.target.value = ''; };
+  rd.readAsText(f);
+});
+
+window.addEventListener('pagehide', flushSave);
+window.addEventListener('pagehide', ()=>{ try{ sessionStorage.setItem('lb-ui', UI.tab); }catch(e){} });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'hidden'){ flushSave(); return; }
+  /* back in the foreground: the date may have rolled over, and another tab may have saved */
+  try{
+    if(MODE === 'local'){
+      const raw = localStorage.getItem(KEY);
+      if(raw){ const p = JSON.parse(raw); if(p && p.meta && (p.meta.rev||0) > (S.meta.rev||0)) S = normalize(p); }
+    }
+  }catch(err){}
+  if(UI.tab === 'today') UI.sel = defaultSel();
+  render();
+});
+window.addEventListener('storage', e => {
+  if(e.key !== KEY || !e.newValue) return;
+  try{ const p = JSON.parse(e.newValue); if(p && p.meta && (p.meta.rev||0) > (S.meta.rev||0)){ S = normalize(p); render(); } }catch(err){}
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+  /* iOS resumes a home-screen app without navigating, so the browser never
+     re-checks the worker by itself. Ask on every return to the foreground (at
+     most once a minute); a newer worker then reloads this window into its build. */
+  let swAsked = 0;
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState !== 'visible' || Date.now() - swAsked < 60000) return;
+    swAsked = Date.now();
+    navigator.serviceWorker.getRegistration().then(r => r ? r.update() : null).catch(()=>{});
+  });
+}
+
+setTimeout(()=>{ const s = el('splash'); if(s){ s.classList.add('hide'); setTimeout(()=>s.remove(), 550); } }, 650);
+})();
+</script>
+</body>
+</html>
