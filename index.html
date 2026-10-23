@@ -295,7 +295,7 @@ body.boot #view>*:nth-child(5){animation-delay:.18s}
 'use strict';
 
 /* Build number - keep equal to VER in sw.js ('lb-v' + APP_VER). */
-const APP_VER = '1.0.0';
+const APP_VER = '1.0.1';
 const KEY = 'lb-data-v1';
 
 /* ---------- the plan (week 1) ---------- */
@@ -343,12 +343,14 @@ const PLAN = {
       note:'Groceries land 8-10am. If the ground beef is still firm at lunch, seal it in a zip bag in cold water for 30-45 min, or eat the chicken plate first.',
       prep:['Oven to 400\u00b0F: bake 4 sweet potatoes','Rice cooker: 3 cups dry jasmine','Brown 1.5 lb taco beef, split into 3','Freeze taco beef portion 3 (for Monday)','Grill all the chicken thighs, split into 3'] },
     { date:'2026-10-22', dow:'Thu', m1:'chickenRice', m2:'ribeye', thaw:'Shrimp', prep:['Make the garlic yogurt sauce'] },
-    { date:'2026-10-23', dow:'Fri', m1:'beefBowl', m2:'shrimp', thaw:'Ground beef (the other 1.5 lb)' },
+    { date:'2026-10-23', dow:'Fri', m1:'strip', m2:'shrimp', thaw:'Ground beef (the other 1.5 lb)',
+      note:'NY strip moved up from Monday. It is still frozen: keep it sealed and sink it in a bowl of cold water for 45-60 min, changing the water once. Today\u2019s taco beef goes in the freezer for Tuesday.',
+      prep:['Cold-water thaw the NY strip, 45-60 min','Freeze taco beef portion 2 (for Tuesday)'] },
     { date:'2026-10-24', dow:'Sat', label:'Prep day', m1:'chickenSweet', m2:'smash', thaw:'Sausage pack 1',
       prep:['Bake 3 sweet potatoes','Rice cooker: 2 cups dry jasmine','Roll 1.5 lb beef into four 6 oz balls'] },
-    { date:'2026-10-25', dow:'Sun', m1:'smashLeft', m2:'sausagePlate', thaw:'NY strip + the frozen taco beef' },
-    { date:'2026-10-26', dow:'Mon', m1:'beefBowl', m2:'strip', thaw:'Sausage pack 2 + NY strip 2' },
-    { date:'2026-10-27', dow:'Tue', m1:'sausageRice', m2:'strip2', thaw:null,
+    { date:'2026-10-25', dow:'Sun', m1:'smashLeft', m2:'sausagePlate', thaw:'Sausage pack 2 + taco beef portion 3' },
+    { date:'2026-10-26', dow:'Mon', m1:'beefBowl', m2:'sausageRice', thaw:'NY strip 2 + taco beef portion 2' },
+    { date:'2026-10-27', dow:'Tue', m1:'beefBowl', m2:'strip2', thaw:null,
       note:'Last day of week 1. In WEIGH, tap COPY FOR CLAUDE and paste it to Claude with what you liked and what is left in the freezer. That builds the week 2 cart.' }
   ]
 };

@@ -3,7 +3,7 @@
    'lb-v' + APP_VER in index.html - that is the build number shown in the app. */
 'use strict';
 
-const VER = 'lb-v1.0.0';
+const VER = 'lb-v1.0.1';
 /* This origin is shared with Ground Force and Yardage Book, and Cache Storage is
    per ORIGIN, not per worker scope. Only ever touch caches that carry our prefix. */
 const PREFIX = 'lb-';
